@@ -2,7 +2,7 @@ const { Plugin, Modal, Notice, TFile, ItemView, Menu, setIcon } = require("obsid
 
 const DEFAULT_DATA = { version: 2, documents: {} };
 const DEFAULT_HIGHLIGHT = "#ffd54f";
-const PALETTE_COLORS = ["#ffd54f", "#fb923c", "#f87171", "#f472b6", "#a78bfa", "#60a5fa", "#5eead4", "#86efac", "#bef264", "#fde68a"];
+const PALETTE_COLORS = ["#27272a", "#71717a", "#ffd54f", "#fb923c", "#f87171", "#f472b6", "#a78bfa", "#60a5fa", "#5eead4", "#86efac", "#bef264", "#fde68a"];
 const TEXT_COLOR_OPTIONS = [["#3f3f46", "墨黑"], ["#ef4444", "红色"], ["#f97316", "橙色"], ["#ca8a04", "金黄"], ["#16a34a", "绿色"], ["#2563eb", "蓝色"], ["#7c3aed", "紫色"]];
 const ANNOTATION_VIEW_TYPE = "margin-ink-annotations";
 
