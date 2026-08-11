@@ -1,0 +1,7 @@
+# Local annotation data can contain private note excerpts and positions.
+# Keep it out of a public plugin repository by default.
+data.json
+
+# Development files
+.DS_Store
+node_modules/
