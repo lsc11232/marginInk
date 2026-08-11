@@ -2,7 +2,7 @@
 
 MarginInk 是一个面向 Obsidian 阅读视图的独立标注插件。它把高亮、下划线、文字样式和浮动文本框作为视觉覆盖层保存，原 Markdown 笔记始终保持原样。
 
-## 界面预览
+## <font color="#245bdb">界面预览</font>
 
 阅读视图中的独立高亮、浮动文本框与当前笔记标注侧边栏：
 
@@ -12,7 +12,7 @@ MarginInk 是一个面向 Obsidian 阅读视图的独立标注插件。它把高
 
 ![MarginInk 标注工具栏与颜色面板](assets/annotation-toolbar.png)
 
-## 为什么用 MarginInk
+## <font color="#245bdb">为什么用 MarginInk</font>
 
 - **不修改源文件**：标注不会写进 `.md` 正文，不会污染笔记、干扰编辑、造成 Git diff 噪声或影响其他 Markdown 工具。
 - **标注独立保存**：所有标注保存在插件的 `data.json`，可以保留原笔记的干净结构。
@@ -22,7 +22,7 @@ MarginInk 是一个面向 Obsidian 阅读视图的独立标注插件。它把高
 - **PPT/Word 式浮动文本框**：可直接输入，拖动边框移动、拖动边和角缩放，并支持字体、字号、颜色、粗体、斜体、下划线、删除线和删除文本框。
 - **可回看、可跳转**：右侧 MarginInk 标注栏仅展示当前笔记的浮动标注，点击即可跳转到对应文本框。
 
-## 功能一览
+## <font color="#245bdb">功能一览</font>
 
 - 阅读视图选中文字后，使用常用圆形颜色添加高亮。
 - 为选中文字添加加粗、斜体、下划线、删除线等独立样式。
@@ -32,7 +32,7 @@ MarginInk 是一个面向 Obsidian 阅读视图的独立标注插件。它把高
 - 打开 MarginInk 侧边栏，浏览并跳转当前笔记中的浮动标注（高亮不显示在列表中）。
 - 导出一份新的带标注 Markdown 笔记。
 
-## 本地安装
+## <font color="#245bdb">本地安装</font>
 
 1. 下载或克隆本仓库。
 2. 将 `main.js`、`manifest.json` 与 `styles.css` 复制到你的 Obsidian 仓库中：
@@ -45,7 +45,7 @@ MarginInk 是一个面向 Obsidian 阅读视图的独立标注插件。它把高
 
 目录名沿用插件 ID `sidecar-annotations`，以保证已有标注数据兼容。
 
-## 标注数据与 Git 同步
+## <font color="#245bdb">标注数据与 Git 同步</font>
 
 MarginInk 的标注数据位于：
 
@@ -63,7 +63,7 @@ MarginInk 的标注数据位于：
 
 若原文被大幅重写，插件会根据保存的选中文字和上下文尽量重新定位；完全一致的原文可获得最稳定的恢复效果。
 
-## 发布到 GitHub
+## <font color="#245bdb">发布到 GitHub</font>
 
 创建一个空 GitHub 仓库后，在本目录执行以下命令，并将占位地址替换为你的仓库地址：
 
@@ -76,6 +76,6 @@ git remote add origin <你的 GitHub 仓库地址>
 git push -u origin main
 ```
 
-## 开发说明
+## <font color="#245bdb">开发说明</font>
 
 这是一个纯 JavaScript 的 Obsidian 插件包，不需要构建步骤。修改代码后，重载 Obsidian 或禁用再启用 MarginInk 即可加载新版本。

@@ -36,6 +36,37 @@ function editableText(element) {
 	return result.replace(/\n{3,}/g, "\n\n").replace(/\n$/, "");
 }
 
+function escapeHtml(value) {
+	const element = document.createElement("div");
+	element.textContent = value;
+	return element.innerHTML;
+}
+
+function normalizedColor(value) {
+	if (validColor(value, "")) return value.toLowerCase();
+	const rgb = String(value || "").match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+	if (!rgb) return null;
+	return `#${[rgb[1], rgb[2], rgb[3]].map((part) => Number(part).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function sanitizeNoteHtml(html) {
+	const root = document.createElement("div");
+	root.innerHTML = html || "";
+	const render = (node) => {
+		if (node.nodeType === Node.TEXT_NODE) return escapeHtml(node.nodeValue || "");
+		if (!(node instanceof HTMLElement)) return "";
+		if (node.tagName === "BR") return "<br>";
+		const content = Array.from(node.childNodes).map(render).join("");
+		if (["SPAN", "FONT"].includes(node.tagName)) {
+			const color = normalizedColor(node.style.color || node.getAttribute("color"));
+			return color ? `<span style="color:${color}">${content}</span>` : content;
+		}
+		if (["DIV", "P", "LI"].includes(node.tagName)) return `${content}<br>`;
+		return content;
+	};
+	return Array.from(root.childNodes).map(render).join("").replace(/(?:<br>){2,}$/g, "<br>");
+}
+
 class FloatingNoteModal extends Modal {
 	constructor(plugin, options) {
 		super(plugin.app);
@@ -464,7 +495,7 @@ module.exports = class SidecarAnnotationsPlugin extends Plugin {
 			swatch.onmousedown = (event) => event.preventDefault();
 			swatch.onclick = () => {
 				bar.classList.remove("is-palette-open");
-				this.updateActiveNoteStyle({ color: value });
+				this.applySelectedTextColor(value);
 			};
 			palette.appendChild(swatch);
 		});
@@ -518,6 +549,32 @@ module.exports = class SidecarAnnotationsPlugin extends Plugin {
 	changeActiveNoteFontSize(delta) {
 		if (!this.activeNote) return;
 		this.updateActiveNoteStyle({ fontSize: clamp((Number(this.activeNote.note.fontSize) || 15) + delta, 12, 32) });
+	}
+
+	async applySelectedTextColor(color) {
+		if (!this.activeNote) return;
+		const { note, path, box, content } = this.activeNote;
+		const selection = window.getSelection();
+		const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+		const hasTextSelection = Boolean(range && !range.collapsed && content.contains(range.commonAncestorContainer));
+		if (!hasTextSelection) return this.updateActiveNoteStyle({ color });
+		const doc = this.documentFor(path);
+		const index = doc.comments.findIndex((item) => item.id === note.id);
+		if (index === -1) return;
+		const before = { text: note.text, html: note.html || "" };
+		document.execCommand("styleWithCSS", false, true);
+		document.execCommand("foreColor", false, color);
+		note.text = editableText(content).trim();
+		note.html = sanitizeNoteHtml(content.innerHTML);
+		doc.comments[index].text = note.text;
+		doc.comments[index].html = note.html;
+		content.dataset.originalText = note.text;
+		content.dataset.originalHtml = note.html;
+		this.recordHistory(path, { type: "comment-updated", id: note.id, before });
+		this.textStyleControls.color.style.setProperty("--active-color", color);
+		const root = box.closest(".markdown-preview-sizer");
+		if (root) this.fitNoteToText(box, content, note, root);
+		await this.persist();
 	}
 
 	async removeActiveComment() {
@@ -739,18 +796,20 @@ module.exports = class SidecarAnnotationsPlugin extends Plugin {
 			box.style.height = `${clamp(Number(note.height) || 88, 46, 900)}px`;
 			const content = document.createElement("div");
 			content.className = "sidecar-floating-note__content";
-			content.textContent = note.text;
+			if (note.html) content.innerHTML = sanitizeNoteHtml(note.html);
+			else content.textContent = note.text;
 			content.contentEditable = "true";
 			content.spellcheck = true;
 			this.applyNoteStyle(box, content, note);
 			content.addEventListener("focus", () => {
 				content.dataset.originalText = note.text || "";
+				content.dataset.originalHtml = note.html || "";
 				content.dataset.originalWidth = String(note.width || 220);
 				content.dataset.originalHeight = String(note.height || 88);
 				this.showTextStyleToolbar(box, note, path, content);
 			});
 			content.addEventListener("input", () => this.fitNoteToText(box, content, note, root));
-			content.addEventListener("blur", () => this.saveInlineCommentText(path, note, editableText(content), content.dataset.originalText || "", {
+			content.addEventListener("blur", () => this.saveInlineCommentText(path, note, editableText(content), sanitizeNoteHtml(content.innerHTML), content.dataset.originalText || "", content.dataset.originalHtml || "", {
 				width: Number(content.dataset.originalWidth) || 220,
 				height: Number(content.dataset.originalHeight) || 88
 			}));
@@ -788,14 +847,18 @@ module.exports = class SidecarAnnotationsPlugin extends Plugin {
 		}
 	}
 
-	async saveInlineCommentText(path, note, text, originalText, originalSize) {
+	async saveInlineCommentText(path, note, text, html, originalText, originalHtml, originalSize) {
 		const nextText = text.trim();
-		if (!nextText || (nextText === originalText && note.width === originalSize.width && note.height === originalSize.height)) return;
+		const nextHtml = html;
+		if (!nextText || (nextText === originalText && nextHtml === originalHtml && note.width === originalSize.width && note.height === originalSize.height)) return;
 		const doc = this.documentFor(path);
 		const index = doc.comments.findIndex((item) => item.id === note.id);
 		if (index === -1) return;
-		this.recordHistory(path, { type: "comment-updated", id: note.id, before: { text: originalText, width: originalSize.width, height: originalSize.height } });
+		this.recordHistory(path, { type: "comment-updated", id: note.id, before: { text: originalText, html: originalHtml, width: originalSize.width, height: originalSize.height } });
 		doc.comments[index].text = nextText;
+		doc.comments[index].html = nextHtml;
+		note.text = nextText;
+		note.html = nextHtml;
 		await this.persist();
 	}
 
