@@ -347,11 +347,19 @@ module.exports = class SidecarAnnotationsPlugin extends Plugin {
 		const colorButton = document.createElement("button");
 		colorButton.className = "sidecar-annotation-toolbar__color";
 		colorButton.textContent = "A";
-		colorButton.title = "选择标注颜色";
+		colorButton.title = "使用当前颜色高亮";
 		colorButton.style.setProperty("--active-color", DEFAULT_HIGHLIGHT);
 		colorButton.onmousedown = (event) => event.preventDefault();
-		colorButton.onclick = () => bar.classList.toggle("is-palette-open");
+		colorButton.onclick = () => this.addHighlight("highlight", this.annotationColor);
 		bar.appendChild(colorButton);
+		const colorMenuButton = document.createElement("button");
+		colorMenuButton.className = "sidecar-annotation-toolbar__color-menu";
+		colorMenuButton.title = "选择默认高亮颜色";
+		colorMenuButton.setAttribute("aria-label", "选择默认高亮颜色");
+		setIcon(colorMenuButton, "chevron-down");
+		colorMenuButton.onmousedown = (event) => event.preventDefault();
+		colorMenuButton.onclick = () => bar.classList.toggle("is-palette-open");
+		bar.appendChild(colorMenuButton);
 
 		const palette = document.createElement("div");
 		palette.className = "sidecar-annotation-toolbar__palette";
@@ -359,12 +367,9 @@ module.exports = class SidecarAnnotationsPlugin extends Plugin {
 			const button = document.createElement("button");
 			button.className = "sidecar-annotation-toolbar__swatch";
 			button.style.setProperty("--swatch", color);
-			button.title = `用 ${color} 高亮`;
+			button.title = `设为默认高亮颜色：${color}`;
 			button.onmousedown = (event) => event.preventDefault();
-			button.onclick = () => {
-				this.setAnnotationColor(color);
-				this.addHighlight("highlight", color);
-			};
+			button.onclick = () => this.setAnnotationColor(color);
 			palette.appendChild(button);
 		});
 		bar.appendChild(palette);
