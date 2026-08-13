@@ -375,10 +375,33 @@ module.exports = class SidecarAnnotationsPlugin extends Plugin {
 		bar.appendChild(palette);
 		this.annotationColor = DEFAULT_HIGHLIGHT;
 		this.annotationColorButton = colorButton;
-		this.addToolbarIcon(bar, "bold", "加粗", () => this.addHighlight("bold", this.annotationColor), "sidecar-annotation-toolbar__bold");
-		this.addToolbarIcon(bar, "strikethrough", "删除线", () => this.addHighlight("strike", this.annotationColor), "sidecar-annotation-toolbar__strike");
-		this.addToolbarIcon(bar, "italic", "斜体", () => this.addHighlight("italic", this.annotationColor), "sidecar-annotation-toolbar__italic");
-		this.addToolbarIcon(bar, "underline", "下划线", () => this.addHighlight("underline", this.annotationColor), "sidecar-annotation-toolbar__underline");
+		this.addToolbarIcon(bar, "bold", "加粗", () => this.addHighlight("bold"), "sidecar-annotation-toolbar__bold");
+		this.addToolbarIcon(bar, "strikethrough", "删除线", () => this.addHighlight("strike"), "sidecar-annotation-toolbar__strike");
+		this.addToolbarIcon(bar, "italic", "斜体", () => this.addHighlight("italic"), "sidecar-annotation-toolbar__italic");
+		const underlineButton = this.addToolbarIcon(bar, "underline", "使用当前颜色画下划线", () => this.addHighlight("underline", this.underlineColor), "sidecar-annotation-toolbar__underline");
+		underlineButton.style.setProperty("--active-color", DEFAULT_HIGHLIGHT);
+		const underlineMenuButton = document.createElement("button");
+		underlineMenuButton.className = "sidecar-annotation-toolbar__color-menu";
+		underlineMenuButton.title = "选择默认下划线颜色";
+		underlineMenuButton.setAttribute("aria-label", "选择默认下划线颜色");
+		setIcon(underlineMenuButton, "chevron-down");
+		underlineMenuButton.onmousedown = (event) => event.preventDefault();
+		underlineMenuButton.onclick = () => bar.classList.toggle("is-underline-palette-open");
+		bar.appendChild(underlineMenuButton);
+		const underlinePalette = document.createElement("div");
+		underlinePalette.className = "sidecar-annotation-toolbar__palette sidecar-annotation-toolbar__underline-palette";
+		PALETTE_COLORS.forEach((color) => {
+			const button = document.createElement("button");
+			button.className = "sidecar-annotation-toolbar__swatch";
+			button.style.setProperty("--swatch", color);
+			button.title = `设为默认下划线颜色：${color}`;
+			button.onmousedown = (event) => event.preventDefault();
+			button.onclick = () => this.setUnderlineColor(color);
+			underlinePalette.appendChild(button);
+		});
+		bar.appendChild(underlinePalette);
+		this.underlineColor = DEFAULT_HIGHLIGHT;
+		this.underlineColorButton = underlineButton;
 		this.addToolbarIcon(bar, "message-square", "添加浮动文字标注", () => this.openNewComment(this.pendingSelection), "sidecar-annotation-toolbar__comment");
 		return bar;
 	}
@@ -387,7 +410,14 @@ module.exports = class SidecarAnnotationsPlugin extends Plugin {
 		const next = validColor(color);
 		this.annotationColor = next;
 		this.annotationColorButton.style.setProperty("--active-color", next);
-		this.toolbar.classList.remove("is-palette-open");
+		this.toolbar.classList.remove("is-palette-open", "is-underline-palette-open");
+	}
+
+	setUnderlineColor(color) {
+		const next = validColor(color);
+		this.underlineColor = next;
+		this.underlineColorButton.style.setProperty("--active-color", next);
+		this.toolbar.classList.remove("is-palette-open", "is-underline-palette-open");
 	}
 
 	addToolbarButton(parent, text, title, handler, cls = "") {
@@ -449,7 +479,7 @@ module.exports = class SidecarAnnotationsPlugin extends Plugin {
 	}
 
 	hideToolbar() {
-		this.toolbar.classList.remove("is-visible", "is-palette-open");
+		this.toolbar.classList.remove("is-visible", "is-palette-open", "is-underline-palette-open");
 	}
 
 	createTextStyleToolbar() {
